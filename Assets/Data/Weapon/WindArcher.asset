@@ -12,11 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5e86d48bd07b9a418a9f4f4e5162487, type: 3}
   m_Name: WindArcher
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  weaponName: "\u30A6\u30A3\u30F3\u30C9\u30A2\u30FC\u30C1\u30E3\u30FC"
+  weaponName: WindArcher
   description: "\u98A8\u3067\u4F5C\u3089\u308C\u305F\u5F13\u3002"
-  icon: {fileID: 0}
-  maxWP: 20
-  wpRecoveryRate: 2
-  offHandRecoveryMultiplier: 2
+  weaponIcon: {fileID: 0}
+  fire1Skill: {fileID: 11400000, guid: d22988ba0de8761489ac7865ade90da3, type: 2}
+  fire2Skill: {fileID: 11400000, guid: d22988ba0de8761489ac7865ade90da3, type: 2}
   settableSkills:
   - {fileID: 11400000, guid: d22988ba0de8761489ac7865ade90da3, type: 2}

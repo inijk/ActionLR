@@ -1,115 +1,102 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(WeaponManager))]
 public class PlayerSkillExecutor : MonoBehaviour
 {
-    [Header("― Input System アクション設定 ―")]
-    [Tooltip("武器切り替え（トグル）用アクション")]
-    [SerializeField] private InputActionReference switchWeaponAction; // 例: Qキーやボタン
+    [Header("― 参照 ―")]
+    [SerializeField] private WeaponManager weaponManager;
+    [SerializeField] private Transform attackPoint;
+    [SerializeField] private SkillCommandMenuUI commandMenuUI;
 
-    [Tooltip("スキル1（例: ライトスラッシュ等）用アクション")]
-    [SerializeField] private InputActionReference skill1Action;       // 例: 1キーや攻撃ボタン1
-
-    [Tooltip("スキル2（例: ヘビィスラッシュ等）用アクション")]
-    [SerializeField] private InputActionReference skill2Action;       // 例: 2キーや攻撃ボタン2
-
-    [SerializeField] private Transform attackPoint; // AimPointerの子にある AttackPoint を割り当て
-    private WeaponManager weaponManager;
-
-    private void Awake()
-    {
-        weaponManager = GetComponent<WeaponManager>();
-    }
+    [Header("― 入力アクション ―")]
+    [SerializeField] private InputActionReference fire1Action;
+    [SerializeField] private InputActionReference fire2Action;
 
     private void OnEnable()
     {
-        // アクションの有効化
-        EnableAction(switchWeaponAction);
-        EnableAction(skill1Action);
-        EnableAction(skill2Action);
+        if (fire1Action != null) { fire1Action.action.Enable(); }
+        if (fire2Action != null) { fire2Action.action.Enable(); }
     }
 
     private void OnDisable()
     {
-        // アクションの無効化
-        DisableAction(switchWeaponAction);
-        DisableAction(skill1Action);
-        DisableAction(skill2Action);
+        if (fire1Action != null) { fire1Action.action.Disable(); }
+        if (fire2Action != null) { fire2Action.action.Disable(); }
     }
 
     private void Update()
     {
-        // 武器トグル切り替え
-        if (IsPressed(switchWeaponAction))
+        // 1. ウィンドウが開いているかどうかの詳細チェック
+        bool isMenuOpen = (commandMenuUI != null && commandMenuUI.IsOpen);
+        
+        // 2. Fire1 の押下検知
+        if (fire1Action != null && fire1Action.action.WasPressedThisFrame())
         {
-            weaponManager.ToggleWeapon();
-        }
+            Debug.Log($"[Debug-Input] Fire1 が押されました。ウィンドウオープン状態: {isMenuOpen}");
 
-        // スキル1発動
-        if (IsPressed(skill1Action))
-        {
-            ExecuteSkill(0);
-        }
-
-        // スキル2発動
-        if (IsPressed(skill2Action))
-        {
-            ExecuteSkill(1);
-        }
-    }
-
-    /// <summary>
-    /// 指定されたインデックスのスキルを実行
-    /// </summary>
-    private void ExecuteSkill(int skillIndex)
-    {
-        WeaponInstance currentWeapon = weaponManager.ActiveWeapon;
-        if (currentWeapon == null || currentWeapon.Data == null) return;
-
-        if (skillIndex < currentWeapon.Data.settableSkills.Count)
-        {
-            SkillData skillToUse = currentWeapon.Data.settableSkills[skillIndex];
-
-            if (weaponManager.TryUseSkill(skillToUse))
+            if (isMenuOpen)
             {
-                Vector2 aimDirection = transform.right; 
-                
-                // AimController があれば現在のエイム方向を取得
-                if (TryGetComponent<PlayerAimController>(out var aimController))
-                {
-                    // aimController から方向を取得する処理など
-                }
-
-                EntityStats playerStats = GetComponent<EntityStats>();
-
-                // 変数名を attackPoint に統一
-                Transform spawnParent = attackPoint != null ? attackPoint : transform;
-                skillToUse.Execute(spawnParent, aimDirection, playerStats);
+                // ウィンドウが開いているときは SkillCommandMenuUI 側でバインド処理が行われるためここでは処理しない
+                return;
             }
-        }
-    }
 
-    #region Helper Methods
-    private void EnableAction(InputActionReference actionRef)
-    {
-        if (actionRef != null && actionRef.action != null)
+            ExecuteFireSlot(1);
+        }
+
+        // 3. Fire2 の押下検知
+        if (fire2Action != null && fire2Action.action.WasPressedThisFrame())
         {
-            actionRef.action.Enable();
+            Debug.Log($"[Debug-Input] Fire2 が押されました。ウィンドウオープン状態: {isMenuOpen}");
+
+            if (isMenuOpen)
+            {
+                return;
+            }
+
+            ExecuteFireSlot(2);
         }
     }
 
-    private void DisableAction(InputActionReference actionRef)
+    private void ExecuteFireSlot(int slotIndex)
     {
-        if (actionRef != null && actionRef.action != null)
+        if (weaponManager == null)
         {
-            actionRef.action.Disable();
+            Debug.LogError("[Debug-Error] WeaponManager がアサインされていません！");
+            return;
         }
+
+        WeaponInstance activeWeapon = weaponManager.ActiveWeapon;
+        if (activeWeapon == null || activeWeapon.Data == null)
+        {
+            Debug.LogWarning("[Debug-Warning] 現在アクティブな武器が存在しません。");
+            return;
+        }
+
+        SkillData targetSkill = (slotIndex == 1) ? activeWeapon.Fire1Skill : activeWeapon.Fire2Skill;
+
+        if (targetSkill == null)
+        {
+            Debug.LogWarning($"[Debug-Warning] 武器「{activeWeapon.Data.weaponName}」の Fire{slotIndex}Skill が未設定です。");
+            return;
+        }
+
+        Debug.Log($"[Debug-Action] 武器「{activeWeapon.Data.weaponName}」の Fire{slotIndex} スキル [{targetSkill.skillName}] を実行します。");
+        ExecuteSpecificSkill(targetSkill);
     }
 
-    private bool IsPressed(InputActionReference actionRef)
+    private void ExecuteSpecificSkill(SkillData skill)
     {
-        return actionRef != null && actionRef.action != null && actionRef.action.WasPressedThisFrame();
+        if (weaponManager.TryUseSkill(skill))
+        {
+            Transform spawnParent = attackPoint != null ? attackPoint : transform;
+            Vector2 aimDirection = attackPoint != null ? (Vector2)attackPoint.up : (Vector2)transform.right;
+            EntityStats playerStats = GetComponent<EntityStats>();
+
+            skill.Execute(spawnParent, aimDirection, playerStats);
+        }
+        else
+        {
+            Debug.LogWarning($"[Debug-Warning] スキル {skill.skillName} の実行条件（WP等）を満たしていません。");
+        }
     }
-    #endregion
 }

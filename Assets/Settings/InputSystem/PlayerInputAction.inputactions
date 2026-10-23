@@ -3,7 +3,7 @@
     "name": "PlayerInputAction",
     "maps": [
         {
-            "name": "Player",
+            "name": "Battle",
             "id": "361e674c-08a7-430d-8fee-2d6cac7c5429",
             "actions": [
                 {
@@ -73,6 +73,24 @@
                     "name": "ChangeWeapon",
                     "type": "Button",
                     "id": "595f58ad-a070-4f6c-a5b7-37a64a093a8d",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "CommandWindow",
+                    "type": "Button",
+                    "id": "d61083d5-8a8b-430c-a833-7b00bcce9cdf",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Pause&Book",
+                    "type": "Button",
+                    "id": "3c90f501-c26f-4dcc-9f1f-ffa13397782c",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -193,7 +211,7 @@
                 {
                     "name": "",
                     "id": "583a4628-bf5b-4190-b559-acff6ed29dac",
-                    "path": "<Keyboard>/leftShift",
+                    "path": "<Keyboard>/space",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -204,7 +222,7 @@
                 {
                     "name": "",
                     "id": "a75619db-a246-4cb1-8650-19b932a713e6",
-                    "path": "<Gamepad>/buttonWest",
+                    "path": "<Gamepad>/rightShoulder",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -308,6 +326,78 @@
                     "processors": "",
                     "groups": "",
                     "action": "Fire2",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "52d1b5ca-ba2a-489e-bf18-0dd963eb4220",
+                    "path": "<Keyboard>/leftShift",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "CommandWindow",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a0cca814-9789-43f8-a7fe-ced9ad2ff0bb",
+                    "path": "<Gamepad>/leftShoulder",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "CommandWindow",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "205252b2-b968-4568-a2d0-2c3bd79486ff",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Pause&Book",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "73c9616d-5cf1-44b6-ab71-647c1be64c03",
+                    "path": "<Gamepad>/rightStickPress",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Pause&Book",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "UI",
+            "id": "2452f11e-2cd5-4487-bb67-72fb558cb248",
+            "actions": [
+                {
+                    "name": "New action",
+                    "type": "Value",
+                    "id": "43931136-542b-47fa-8e7e-0dbaf962b01d",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "f95d29fb-c03e-436b-830c-a1861ce5046d",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

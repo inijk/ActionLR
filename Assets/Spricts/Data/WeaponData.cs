@@ -1,28 +1,24 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "NewWeaponData", menuName = "Combat/Weapon Data")]
+[CreateAssetMenu(fileName = "Weapon_", menuName = "Combat/Weapon Data")]
 public class WeaponData : ScriptableObject
 {
-    [Header("― 基本情報 ―")]
-    public string weaponName = "武器名";
-    [TextArea(2, 5)]
-    public string description = "武器の説明文";
-    public Sprite icon;
+    [Header("― 武器基本情報 ―")]
+    public string weaponName;
+    [TextArea] public string description;
+    public Sprite weaponIcon;
 
-    [Header("― WP・回復パラメータ ―")]
-    public float maxWP = 20f;              // 最大WP
-    public float wpRecoveryRate = 2f;      // 通常回復速度（毎秒）
-    public float offHandRecoveryMultiplier = 2.0f; // 非装備（裏武器）時の回復倍率
+    [Header("― ショートカット割り当てスキル ―")]
+    public SkillData fire1Skill;
+    public SkillData fire2Skill;
 
-    [Header("― スキル・アビリティ枠 ―")]
-    public List<SkillData> settableSkills = new List<SkillData>(); // セット可能なスキル一覧
+    [Header("― 所持・アンロック済み全スキル一覧 ―")]
+    public List<SkillData> settableSkills = new List<SkillData>();
 
-    // エディタ上で値の変更・アセット名の変更があった際に自動呼び出しされる
     private void OnValidate()
     {
-        // アセット名（ファイル名）を自動的に skillName に代入
-        if (!string.IsNullOrEmpty(name))
+        if (!string.IsNullOrEmpty(name) && string.IsNullOrEmpty(weaponName))
         {
             weaponName = name;
         }

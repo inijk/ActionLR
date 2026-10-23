@@ -12,11 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5e86d48bd07b9a418a9f4f4e5162487, type: 3}
   m_Name: BeginningBlade
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  weaponName: "\u30D3\u30AE\u30CB\u30F3\u30B0\u30D6\u30EC\u30FC\u30C9"
+  weaponName: BeginningBlade
   description: "\u521D\u671F\u88C5\u5099\u3002\u6271\u3044\u3084\u3059\u3044\u304C\u5A01\u529B\u306F\u304A\u7C97\u672B\u3002"
-  icon: {fileID: 0}
-  maxWP: 20
-  wpRecoveryRate: 20
-  offHandRecoveryMultiplier: 1
+  weaponIcon: {fileID: 0}
+  fire1Skill: {fileID: 11400000, guid: c848e8e339b1db741a609bec8892ea22, type: 2}
+  fire2Skill: {fileID: 0}
   settableSkills:
-  - {fileID: 11400000, guid: a57f8ed8d1d021741a6f73f73ccc5e15, type: 2}
+  - {fileID: 11400000, guid: c848e8e339b1db741a609bec8892ea22, type: 2}

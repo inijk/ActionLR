@@ -1,53 +1,85 @@
-using System;
-using UnityEngine;
-
-[Serializable]
-public class WeaponInstance
-{
-    public WeaponData Data { get; private set; }
-    public ResourceGauge WPGauge { get; private set; }
-
-    public WeaponInstance(WeaponData data)
+using UnityEngine;  
+  
+public class WeaponInstance  
+{  
+    public WeaponData Data { get; private set; }  
+    public ResourceGauge WPGauge { get; private set; }  
+  
+    public SkillData Fire1Skill => Data != null ? Data.fire1Skill : null;  
+    public SkillData Fire2Skill => Data != null ? Data.fire2Skill : null;  
+  
+    public WeaponInstance(WeaponData data, Stat maxStat = null)  
+    {  
+        Data = data;  
+        if (Data != null)  
+        {  
+            Stat wpStat = maxStat != null ? maxStat : new Stat(100f);  
+            WPGauge = new ResourceGauge(wpStat);  
+            WPGauge.Initialize(); // ゲージの初期化を確実に実行  
+  
+            InitializeDefaultSkills();  
+        }  
+    }  
+  
+    private void InitializeDefaultSkills()  
+    {  
+        if (Data.settableSkills == null || Data.settableSkills.Count == 0) return;  
+  
+        if (Data.fire1Skill == null && Data.settableSkills.Count > 0)  
+        {  
+            Data.fire1Skill = Data.settableSkills[0];  
+        }  
+  
+        if (Data.fire2Skill == null)  
+        {  
+            if (Data.settableSkills.Count > 1) Data.fire2Skill = Data.settableSkills[1];  
+            else if (Data.settableSkills.Count == 1) Data.fire2Skill = Data.settableSkills[0];  
+        }  
+    }  
+  
+    /// <summary>  
+    /// スキルコスト分の WP を消費する処理  
+    /// </summary>  
+    public bool ConsumeWP(float amount)  
+    {  
+        if (WPGauge == null) return false;  
+  
+        if (WPGauge.CurrentValue >= amount)  
+        {  
+            bool success = WPGauge.Consume(amount);   
+            if (success)  
+            {  
+                //Debug.Log($"[WeaponInstance] WPを消費しました: -{amount}");  
+                return true;  
+            }  
+        }  
+  
+        //Debug.Log($"[WeaponInstance] WPが不足しています (必要: {amount})");  
+        return false;  
+    }  
+  
+    /// <summary>  
+    /// 指定量の WP を回復する処理  
+    /// </summary>  
+    public void RecoverWP(float amount)
     {
-        Data = data;
-        if (Data != null)
-        {
-            // StatクラスとResourceGaugeクラス（既存設計）を活用[cite: 2]
-            Stat maxWPStat = new Stat(Data.maxWP);
-            WPGauge = new ResourceGauge(maxWPStat);
-            WPGauge.Initialize();
-        }
+        if (WPGauge == null) return;
+
+        // ResourceGauge が持つ Recover メソッドを呼び出して実際に数値を増やす
+        WPGauge.Recover(amount);
     }
-
-    /// <summary>
-    /// 指定した時間(deltaTime)分、WPを回復する
-    /// </summary>
-    public void UpdateWP(float deltaTime, bool isEquipped)
-    {
-        if (Data == null || WPGauge == null) return;
-
-        // 非装備（裏武器）時は回復倍率を適用[cite: 1]
-        float multiplier = isEquipped ? 1.0f : Data.offHandRecoveryMultiplier;
-        float recoveryAmount = Data.wpRecoveryRate * multiplier * deltaTime;
-
-        WPGauge.Recover(recoveryAmount); //[cite: 2]
-    }
-
-    /// <summary>
-    /// スキル発動に必要なWPが足りているかチェック[cite: 1, 2]
-    /// </summary>
-    public bool HasEnoughWP(float cost)
-    {
-        if (WPGauge == null) return false;
-        return WPGauge.CurrentValue >= cost; //[cite: 2]
-    }
-
-    /// <summary>
-    /// WPを消費する[cite: 2]
-    /// </summary>
-    public bool ConsumeWP(float cost)
-    {
-        if (!HasEnoughWP(cost)) return false;
-        return WPGauge.Consume(cost); //[cite: 2]
-    }
+  
+    /// <summary>  
+    /// 毎フレームの WP 自動回復や自然減少の更新  
+    /// </summary>  
+    public void UpdateWP(float deltaTime, float recoveryRatePerSecond)  
+    {  
+        if (WPGauge == null) return;  
+  
+        if (WPGauge.CurrentValue < WPGauge.MaxStat.Value)  
+        {  
+            float recoverAmount = recoveryRatePerSecond * deltaTime;  
+            RecoverWP(recoverAmount);  
+        }  
+    }  
 }

@@ -16,6 +16,5 @@ MonoBehaviour:
   description: "\u91CD\u3044\u4E00\u6483\u3092\u653E\u3064"
   icon: {fileID: 0}
   wpCost: 10
-  meleeHitboxPrefab: {fileID: 7685040735048101494, guid: 32aac72d3452044499b26f0b7a492b63, type: 3}
-  spawnOffsetDistance: 1.5
+  meleeHitboxPrefab: {fileID: 7685040735048101494, guid: bab73a75a76d8ae478617d4fc1289e3b, type: 3}
   damageMultiplier: 2

@@ -16,7 +16,9 @@ MonoBehaviour:
   description: "\u7D20\u65E9\u3044\u77E2\u3092\u767A\u5C04\u3059\u308B"
   icon: {fileID: 0}
   wpCost: 2
-  bulletPrefab: {fileID: 0}
+  bulletPrefab: {fileID: 7685040735048101494, guid: cde5778940fac154dbadc62037996c8b, type: 3}
   bulletSpeed: 10
   rangeLifetime: 3
   damageMultiplier: 0.6
+  isPierce: 0
+  maxPierceCount: 3

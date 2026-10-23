@@ -24,6 +24,7 @@ public class EntityStats : MonoBehaviour
     public Stat Mind { get; private set; }
     public Stat MaxHP { get; private set; }
     public Stat MaxST { get; private set; }
+    public Stat maxWp;
     public Stat STRecoveryRate { get; private set; }
 
     // 死亡時に通知されるイベント
@@ -47,11 +48,12 @@ public class EntityStats : MonoBehaviour
         float calculatedMaxHP = 50f + (baseLevels.VIT * 20f);
         float calculatedMaxST = 30f + (baseLevels.DEX * 10f);
         float calculatedSTRec = 5f + (baseLevels.DEX * 1.5f);
-
+        float calculatedMaxWP = 100f; // ← WPの基本値（必要に応じてDEXやINT等で変動させてもOKです）
         // 2. Statインスタンスの生成
         MaxHP = new Stat(calculatedMaxHP);
         MaxST = new Stat(calculatedMaxST);
         STRecoveryRate = new Stat(calculatedSTRec);
+        maxWp = new Stat(calculatedMaxWP); // ★ ここで maxWp のインスタンスを生成する！
 
         Attack = new Stat(baseLevels.ATK * 10f);
         Intelligence = new Stat(baseLevels.INT * 10f);
