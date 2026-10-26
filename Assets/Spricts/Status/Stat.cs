@@ -21,14 +21,14 @@ public class Stat
 }
 
 // 動的リソース（現在HP, 現在STなど）
+// 動的リソース（現在HP, 現在STなど）
 [Serializable]
 public class ResourceGauge
 {
     public float CurrentValue { get; private set; }
     public Stat MaxStat { get; private set; }
 
-    // UI更新などに使えるイベント
-    public event Action<float, float> OnValueChanged; // (現在値, 最大値)
+    public event Action<float, float> OnValueChanged;
 
     public ResourceGauge(Stat maxStat)
     {
@@ -36,20 +36,21 @@ public class ResourceGauge
         CurrentValue = MaxStat.Value;
     }
 
-    // 初期化用
     public void Initialize()
     {
         CurrentValue = MaxStat.Value;
         OnValueChanged?.Invoke(CurrentValue, MaxStat.Value);
     }
 
-    // 消費 / ダメージ処理
+    // ダメージ / 消費処理（大きなダメージでも0に落として実行）
     public bool Consume(float amount)
     {
-        if (CurrentValue < amount) return false; // コスト不足
+        if (amount <= 0f) return false;
 
-        CurrentValue = Mathf.Max(0, CurrentValue - amount);
+        // 現HPを超えるダメージが来ても 0 で固定（クランプ）して減算
+        CurrentValue = Mathf.Max(0f, CurrentValue - amount);
         OnValueChanged?.Invoke(CurrentValue, MaxStat.Value);
+        
         return true;
     }
 

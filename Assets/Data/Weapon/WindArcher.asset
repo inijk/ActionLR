@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5e86d48bd07b9a418a9f4f4e5162487, type: 3}
+  m_Name: WindArcher
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  weaponName: WindArcher
+  description: "\u98A8\u3067\u4F5C\u3089\u308C\u305F\u5F13\u3002"
+  weaponIcon: {fileID: 0}
+  fire1Skill: {fileID: 11400000, guid: d22988ba0de8761489ac7865ade90da3, type: 2}
+  fire2Skill: {fileID: 11400000, guid: d22988ba0de8761489ac7865ade90da3, type: 2}
+  settableSkills:
+  - {fileID: 11400000, guid: d22988ba0de8761489ac7865ade90da3, type: 2}

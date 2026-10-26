@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f327e39722d60d4da618b10a12766bc, type: 3}
+  m_Name: QuickShot
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectileSkillData
+  skillName: QuickShot
+  description: "\u7D20\u65E9\u3044\u77E2\u3092\u767A\u5C04\u3059\u308B"
+  icon: {fileID: 0}
+  wpCost: 2
+  bulletPrefab: {fileID: 7685040735048101494, guid: cde5778940fac154dbadc62037996c8b, type: 3}
+  bulletSpeed: 10
+  rangeLifetime: 3
+  damageMultiplier: 0.6
+  isPierce: 0
+  maxPierceCount: 3
