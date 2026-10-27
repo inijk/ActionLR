@@ -393,4 +393,16 @@ public class DungeonManager : MonoBehaviour
             default: return Direction.North;
         }
     }
+
+    // MiniMapUI からマップデータを参照するためのメソッド
+    public Dictionary<Vector2Int, RoomData> GetMapData()
+    {
+        return mapData;
+    }
+
+    // MiniMapUI から現在地座標を参照するためのゲッター
+    public Vector2Int GetCurrentGridCoord()
+    {
+        return currentGridCoord; // 現在地を管理している変数名に合わせて調整してください
+    }
 }
