@@ -5,20 +5,23 @@ public class EnemyAI : MonoBehaviour
 {
     [Header("― 行動設定 (ScriptableObject) ―")]
     [SerializeField] private EnemyMovementPattern movementPattern;
+    [Header("― 敵データ参照 ―")]
+    [SerializeField] private EnemyData enemyData;
 
-    [Header("― パラメータ ―")]
-    [SerializeField] private float changeInterval = 2.0f; // 方向を変える間隔（秒）
-    [SerializeField] private float moveSpeed = 3.0f;       // 移動速度
-
+    public EnemyData Data => enemyData;
     private Rigidbody2D rb;
     private EntityStats stats;
     private Vector2 currentMoveVector = Vector2.zero;
     private float timer = 0f;
+    private float changeInterval = 2;// 方向を変える間隔（秒）
+    private float moveSpeed = 3;       // 移動速度
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         stats = GetComponent<EntityStats>(); // ステータス管理コンポーネントがあれば取得[cite: 2]
+        moveSpeed = enemyData.moveSpeed;
+        changeInterval = enemyData.moveInterval;
     }
 
     private void Update()
@@ -30,10 +33,40 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        if (stats != null)
+        {
+            stats.OnDeath += HandleDeath;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (stats != null)
+        {
+            stats.OnDeath -= HandleDeath;
+        }
+    }
+
     private void FixedUpdate()
     {
         // 物理更新タイミングで移動を反映[cite: 3]
         Vector2 targetPosition = rb.position + currentMoveVector * moveSpeed * Time.fixedDeltaTime;
         rb.MovePosition(targetPosition);
+    }
+
+    private void HandleDeath()
+    {
+        // EnemyData に設定されている EXP をプレイヤーに渡す
+        if (enemyData != null)
+        {
+            PlayerExpController playerExp = FindObjectOfType<PlayerExpController>();
+            if (playerExp != null)
+            {
+                playerExp.GainExp(enemyData.dropExp);
+                Debug.Log($"{enemyData.enemyName} を討伐！ EXP +{enemyData.dropExp} を獲得");
+            }
+        }
     }
 }
