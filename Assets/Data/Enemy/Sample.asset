@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Sample
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   enemyName: "\u6575\u306E\u540D\u524D"
-  description: 
+  description: "\u30B5\u30F3\u30D7\u30EB\u304F\u3093"
   icon: {fileID: 0}
   dropExp: 25
-  movementPattern: {fileID: 0}
+  movementPattern: {fileID: 11400000, guid: 36e707beb625abd41b7ed8c6003d6870, type: 2}
   moveInterval: 2
   moveSpeed: 3
