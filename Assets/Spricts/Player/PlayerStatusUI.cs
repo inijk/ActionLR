@@ -1,20 +1,35 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
 
 public class PlayerStatusUI : MonoBehaviour
 {
     [Header("― 参照コンポーネント ―")]
-    [SerializeField] private EntityStats playerStats;     //[cite: 3]
+    [SerializeField] private EntityStats playerStats;
     [SerializeField] private WeaponManager weaponManager;
 
-    [Header("― UIコンポーネント ―")]
-    [SerializeField] private TextMeshProUGUI statusText;
+    [Header("― HP / ST UI (HPは数値＋ゲージ、STはゲージのみ) ―")]
+    [SerializeField] private Image hpFillImage;
+    [SerializeField] private TextMeshProUGUI hpText;
+    [SerializeField] private Image stFillImage;
 
-    // 内部キャッシュ用データ
-    private string hpString = "HP: --- / ---";
-    private string stString = "ST: --- / ---";
-    private string weaponString = "装備: なし";
-    private string wpString = "WP: --- / ---";
+    [System.Serializable]
+    public struct WPGaugeUI
+    {
+        [Header("各スロット固有のUI要素（位置・大きさはエディタ上のRectTransformで個別に設定）")]
+        public Image fillImage;          // WPゲージのFill
+        public TextMeshProUGUI wpText;   // WPの数値テキスト
+        public Image weaponIconImage;    // 武器のImage (アイコン等)
+        public Image colorImage;         // 色を反映するImage（背景やフレームなど）
+    }
+
+    [Header("― WP 3スロット UI (固定配置されたスロット 1, 2, 3) ―")]
+    [SerializeField] private WPGaugeUI[] wpGauges = new WPGaugeUI[3];
+    [SerializeField] private TextMeshProUGUI activeWeaponNameText;
+
+    [Header("― スロットごとの基本カラー (0:R, 1:G, 2:B) ―")]
+    [SerializeField] private Color[] slotColors = new Color[] { Color.red, Color.green, Color.blue };
 
     private void OnEnable()
     {
@@ -28,30 +43,36 @@ public class PlayerStatusUI : MonoBehaviour
 
     private void Start()
     {
-        if (playerStats == null) playerStats = GetComponentInParent<EntityStats>(); //[cite: 3]
+        if (playerStats == null) playerStats = GetComponentInParent<EntityStats>();
         if (weaponManager == null) weaponManager = GetComponentInParent<WeaponManager>();
 
-        // イベントの再登録と初期描画
         RegisterEvents();
         RefreshAllDisplay();
     }
 
+    private void Update()
+    {
+        // 毎フレームWPの回復・変動を読み込み、UIに即時反映させる
+        if (weaponManager != null)
+        {
+            weaponManager.NotifyStateChanged();
+        }
+    }
+
     private void RegisterEvents()
     {
-        UnregisterEvents(); // 重複登録防止
+        UnregisterEvents();
 
-        // 1. HP / ST のイベント登録[cite: 1]
         if (playerStats != null)
         {
-            if (playerStats.HP != null) playerStats.HP.OnValueChanged += OnHPChanged; //[cite: 1]
-            if (playerStats.ST != null) playerStats.ST.OnValueChanged += OnSTChanged; //[cite: 1]
+            if (playerStats.HP != null) playerStats.HP.OnValueChanged += OnHPChanged;
+            if (playerStats.ST != null) playerStats.ST.OnValueChanged += OnSTChanged;
         }
 
-        // 2. 武器 / WP のイベント登録
         if (weaponManager != null)
         {
             weaponManager.OnWeaponSwitched += OnWeaponSwitched;
-            weaponManager.OnActiveWeaponWPChanged += OnWPChanged;
+            weaponManager.OnWPStateChanged += OnWPStateChanged;
         }
     }
 
@@ -59,72 +80,94 @@ public class PlayerStatusUI : MonoBehaviour
     {
         if (playerStats != null)
         {
-            if (playerStats.HP != null) playerStats.HP.OnValueChanged -= OnHPChanged; //[cite: 1]
-            if (playerStats.ST != null) playerStats.ST.OnValueChanged -= OnSTChanged; //[cite: 1]
+            if (playerStats.HP != null) playerStats.HP.OnValueChanged -= OnHPChanged;
+            if (playerStats.ST != null) playerStats.ST.OnValueChanged -= OnSTChanged;
         }
 
         if (weaponManager != null)
         {
             weaponManager.OnWeaponSwitched -= OnWeaponSwitched;
-            weaponManager.OnActiveWeaponWPChanged -= OnWPChanged;
+            weaponManager.OnWPStateChanged -= OnWPStateChanged;
         }
     }
 
-    // --- イベント受信ハンドラ ---
-
     private void OnHPChanged(float current, float max)
     {
-        hpString = $"HP: {current:F0} / {max:F0}";
-        RenderUI();
-        // 将来のゲージ対応例: hpSlider.value = current / max;
+        if (hpFillImage != null) hpFillImage.fillAmount = max > 0 ? current / max : 0f;
+        if (hpText != null) hpText.text = $"{current:F0} / {max:F0}";
     }
 
     private void OnSTChanged(float current, float max)
     {
-        stString = $"ST: {current:F1} / {max:F0}";
-        RenderUI();
-        // 将来のゲージ対応例: stSlider.value = current / max;
+        // STはゲージのみ
+        if (stFillImage != null) stFillImage.fillAmount = max > 0 ? current / max : 0f;
     }
 
     private void OnWeaponSwitched(WeaponInstance weapon)
     {
-        if (weapon != null && weapon.Data != null)
+        if (activeWeaponNameText != null)
         {
-            weaponString = $"装備: {weapon.Data.weaponName}";
-            if (weapon.WPGauge != null)
+            activeWeaponNameText.text = (weapon != null && weapon.Data != null) ? $"装備: {weapon.Data.weaponName}" : "装備: なし";
+        }
+    }
+
+    /// <summary>
+    /// 武器変更および毎フレームの更新により、Image, Color, WP の三要素を各UIスロットにローテーション割り当てして外見を変化させる
+    /// </summary>
+    private void OnWPStateChanged(int activeIndex, List<WeaponInstance> weapons)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            // アクティブな武器がスロット0にくるようにローテーション
+            int weaponIndex = (i + activeIndex) % 3;
+            WeaponInstance targetWeapon = (weapons.Count > weaponIndex) ? weapons[weaponIndex] : null;
+
+            WPGaugeUI slotUI = wpGauges[i];
+
+            // 1. Color の割り当て
+            Color slotColor = (slotColors.Length > weaponIndex) ? slotColors[weaponIndex] : Color.white;
+            if (slotUI.colorImage != null) slotUI.colorImage.color = slotColor;
+            if (slotUI.fillImage != null) slotUI.fillImage.color = slotColor;
+
+            // 2. Image (武器アイコン等) の割り当て
+            if (slotUI.weaponIconImage != null)
             {
-                wpString = $"WP: {weapon.WPGauge.CurrentValue:F1} / {weapon.WPGauge.MaxStat.Value:F0}";
+                if (targetWeapon != null && targetWeapon.Data != null && targetWeapon.Data.weaponIcon != null)
+                {
+                    slotUI.weaponIconImage.gameObject.SetActive(true);
+                    slotUI.weaponIconImage.sprite = targetWeapon.Data.weaponIcon;
+                }
+                else
+                {
+                    slotUI.weaponIconImage.gameObject.SetActive(false);
+                }
+            }
+
+            // 3. WP (ゲージ量・数値) の割り当て
+            if (slotUI.fillImage != null)
+            {
+                if (targetWeapon != null && targetWeapon.WPGauge != null)
+                {
+                    float cur = targetWeapon.WPGauge.CurrentValue;
+                    float max = targetWeapon.WPGauge.MaxStat.Value;
+                    
+                    slotUI.fillImage.fillAmount = max > 0 ? cur / max : 0f;
+                    slotUI.fillImage.SetAllDirty(); // 実行中の強制再描画
+
+                    if (slotUI.wpText != null)
+                    {
+                        slotUI.wpText.text = $"{cur:F1} / {max:F0}";
+                    }
+                }
+                else
+                {
+                    slotUI.fillImage.fillAmount = 0f;
+                    if (slotUI.wpText != null) slotUI.wpText.text = "---";
+                }
             }
         }
-        else
-        {
-            weaponString = "装備: なし";
-            wpString = "WP: --- / ---";
-        }
-        RenderUI();
     }
 
-    private void OnWPChanged(float current, float max)
-    {
-        wpString = $"WP: {current:F1} / {max:F0}";
-        RenderUI();
-        // 将来のゲージ対応例: wpSlider.value = current / max;
-    }
-
-    /// <summary>
-    /// キャッシュされた文字列をまとめて描画（描画呼び出しの集約）
-    /// </summary>
-    private void RenderUI()
-    {
-        if (statusText != null)
-        {
-            statusText.text = $"{hpString}\n{stString}\n{weaponString}\n{wpString}";
-        }
-    }
-
-    /// <summary>
-    /// 初期表示やリセット時の全表示強制更新
-    /// </summary>
     public void RefreshAllDisplay()
     {
         if (playerStats != null)
@@ -133,13 +176,10 @@ public class PlayerStatusUI : MonoBehaviour
             if (playerStats.ST != null) OnSTChanged(playerStats.ST.CurrentValue, playerStats.ST.MaxStat.Value);
         }
 
-        if (weaponManager != null && weaponManager.ActiveWeapon != null)
+        if (weaponManager != null)
         {
             OnWeaponSwitched(weaponManager.ActiveWeapon);
-        }
-        else
-        {
-            RenderUI();
+            weaponManager.NotifyStateChanged();
         }
     }
 }

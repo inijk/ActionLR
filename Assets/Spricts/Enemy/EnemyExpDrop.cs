@@ -4,6 +4,7 @@ public class EnemyExpDrop : MonoBehaviour
 {
     [Header("― 討伐報酬 ―")]
     [SerializeField] private float dropExp = 25f;
+    [SerializeField] private float dropGold = 10f;
 
     private void Start()
     {

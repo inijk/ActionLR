@@ -60,4 +60,14 @@ public class ResourceGauge
         CurrentValue = Mathf.Min(MaxStat.Value, CurrentValue + amount);
         OnValueChanged?.Invoke(CurrentValue, MaxStat.Value);
     }
+
+    // 【追記】超過ダメージを許容してHPを 0 まで削るダメージ専用メソッド
+    public void Damage(float amount)
+    {
+        if (amount <= 0) return;
+
+        // 現HPより大きいダメージでも 0 でクランプして適用する
+        CurrentValue = Mathf.Max(0, CurrentValue - amount);
+        OnValueChanged?.Invoke(CurrentValue, MaxStat.Value);
+    }
 }
