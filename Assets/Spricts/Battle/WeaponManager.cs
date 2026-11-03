@@ -5,42 +5,36 @@ using UnityEngine.InputSystem;
 
 public class WeaponManager : MonoBehaviour
 {
-    public enum WeaponSlot { Weapon1, Weapon2 }
+    public enum WeaponSlot { Wp1, Wp2, Wp3 }
 
     [Header("― WP回復設定 ―")]
-    [SerializeField] private float wpRecoveryRate = 10f; // 1秒あたりのWP自然回復量
+    [SerializeField] private float wpRecoveryRate = 10f;
 
-    [Header("― 武器スロット・データ ―")]
+    [Header("― 武器スロット・データ (3つ) ―")]
     [SerializeField] private WeaponData weaponData1;
     [SerializeField] private WeaponData weaponData2;
-    [SerializeField] private EntityStats playerStats; // プレイヤーのステータス
+    [SerializeField] private WeaponData weaponData3;
+    [SerializeField] private EntityStats playerStats;
 
     private Dictionary<WeaponSlot, WeaponInstance> weaponSlots = new Dictionary<WeaponSlot, WeaponInstance>();
-    public WeaponSlot CurrentSlot { get; private set; } = WeaponSlot.Weapon1;
+    public WeaponSlot CurrentSlot { get; private set; } = WeaponSlot.Wp1;
 
     public WeaponInstance ActiveWeapon => weaponSlots.ContainsKey(CurrentSlot) ? weaponSlots[CurrentSlot] : null;
 
     // --- イベント定義 ---
     public event Action<WeaponInstance> OnWeaponSwitched;
-    
-    // ★ PlayerStatusUI が求めている WP 変更通知イベントを追加
-    public event Action<float, float> OnActiveWeaponWPChanged;
+    // 現在のアクティブインデックス（0, 1, 2）と全WP情報を通知するイベント
+    public event Action<int, List<WeaponInstance>> OnWPStateChanged;
 
     [Header("― 武器切替用入力アクション ―")]
     [SerializeField] private InputActionReference switchWeaponAction;
 
     private void Start()
     {
-        // もし playerStats がインスペクターでアサインされていなければ自動取得を試みる
         if (playerStats == null)
         {
-            playerStats = GetComponent<EntityStats>();
-            if (playerStats == null)
-            {
-                playerStats = GetComponentInParent<EntityStats>();
-            }
+            playerStats = GetComponent<EntityStats>() ?? GetComponentInParent<EntityStats>();
         }
-
         InitializeWeapons();
     }
 
@@ -63,50 +57,52 @@ public class WeaponManager : MonoBehaviour
 
     private void Update()
     {
-        // キーボードの数字キーでの手動切り替えテスト（1キー: 武器1, 2キー: 武器2）
+        // キーボードでの手動切り替え（1, 2, 3キー）
         if (Keyboard.current != null)
         {
-            if (Keyboard.current.digit1Key.wasPressedThisFrame) SwitchWeapon(WeaponSlot.Weapon1);
-            if (Keyboard.current.digit2Key.wasPressedThisFrame) SwitchWeapon(WeaponSlot.Weapon2);
+            if (Keyboard.current.digit1Key.wasPressedThisFrame) SwitchWeapon(WeaponSlot.Wp1);
+            if (Keyboard.current.digit2Key.wasPressedThisFrame) SwitchWeapon(WeaponSlot.Wp2);
+            if (Keyboard.current.digit3Key.wasPressedThisFrame) SwitchWeapon(WeaponSlot.Wp3);
         }
 
-        // アクティブな武器のWPゲージの変動を監視してUIに通知する例
-        // （ResourceGauge側に値の変更検知や現在値プロパティがある場合のサンプル）
-        // ★ 装備中の武器のWPを毎フレーム自動回復させる
-        WeaponInstance active = ActiveWeapon;
-        if (active != null && active.WPGauge != null)
+        // ★ すべての武器スロット（Wp1, Wp2, Wp3）を毎フレーム自動回復・更新する
+        bool isUpdated = false;
+        foreach (var kvp in weaponSlots)
         {
-            float beforeValue = active.WPGauge.CurrentValue;
-            
-            // 武器ごとの回復処理を呼ぶ
-            active.UpdateWP(Time.deltaTime, wpRecoveryRate);
-
-            // 値が変動していたらUIに通知する
-            if (!Mathf.Approximately(beforeValue, active.WPGauge.CurrentValue))
+            WeaponInstance weapon = kvp.Value;
+            if (weapon != null && weapon.WPGauge != null)
             {
-                NotifyWPChanged(active.WPGauge.CurrentValue, active.WPGauge.MaxStat.Value);
+                // 毎フレーム各武器のWPを更新
+                weapon.UpdateWP(Time.deltaTime, wpRecoveryRate);
+                isUpdated = true;
             }
+        }
+
+        // 変動があればUI側へ状態変化を通知
+        if (isUpdated)
+        {
+            NotifyStateChanged();
         }
     }
 
     private void InitializeWeapons()
     {
-        // EntityStats 側の最大WPプロパティ名に合わせる
-        // ※もし EntityStats 側に maxWp がなく maxWP や wpMax の場合はここを書き換えてください
         Stat maxWpStat = playerStats != null ? playerStats.maxWp : new Stat(100f);
 
-        if (weaponData1 != null)
-            weaponSlots[WeaponSlot.Weapon1] = new WeaponInstance(weaponData1, maxWpStat);
-        if (weaponData2 != null)
-            weaponSlots[WeaponSlot.Weapon2] = new WeaponInstance(weaponData2, maxWpStat);
+        if (weaponData1 != null) weaponSlots[WeaponSlot.Wp1] = new WeaponInstance(weaponData1, maxWpStat);
+        if (weaponData2 != null) weaponSlots[WeaponSlot.Wp2] = new WeaponInstance(weaponData2, maxWpStat);
+        if (weaponData3 != null) weaponSlots[WeaponSlot.Wp3] = new WeaponInstance(weaponData3, maxWpStat);
 
-        Debug.Log($"[WeaponManager] 武器の初期化完了。現在の装備: {ActiveWeapon?.Data.weaponName ?? "なし"}");
+        CurrentSlot = weaponSlots.ContainsKey(WeaponSlot.Wp1) ? WeaponSlot.Wp1 : WeaponSlot.Wp2;
+        NotifyStateChanged();
     }
 
     private void OnSwitchWeaponPerformed(InputAction.CallbackContext context)
     {
-        WeaponSlot nextSlot = (CurrentSlot == WeaponSlot.Weapon1) ? WeaponSlot.Weapon2 : WeaponSlot.Weapon1;
-        SwitchWeapon(nextSlot);
+        // 順番にトグル切り替え（Wp1 -> Wp2 -> Wp3 -> Wp1）
+        if (CurrentSlot == WeaponSlot.Wp1) SwitchWeapon(WeaponSlot.Wp2);
+        else if (CurrentSlot == WeaponSlot.Wp2) SwitchWeapon(WeaponSlot.Wp3);
+        else SwitchWeapon(WeaponSlot.Wp1);
     }
 
     public void SwitchWeapon(WeaponSlot slot)
@@ -114,18 +110,21 @@ public class WeaponManager : MonoBehaviour
         if (weaponSlots.ContainsKey(slot))
         {
             CurrentSlot = slot;
-            Debug.Log($"[WeaponManager] 武器を切り替えました: {ActiveWeapon?.Data.weaponName}");
             OnWeaponSwitched?.Invoke(ActiveWeapon);
-        }
-        else
-        {
-            Debug.LogWarning($"[WeaponManager] 指定されたスロット {slot} に武器が存在しません。");
+            NotifyStateChanged();
         }
     }
 
-    public void NotifyWPChanged(float currentWP, float maxWP)
+    public void NotifyStateChanged()
     {
-        OnActiveWeaponWPChanged?.Invoke(currentWP, maxWP);
+        List<WeaponInstance> instances = new List<WeaponInstance>
+        {
+            weaponSlots.ContainsKey(WeaponSlot.Wp1) ? weaponSlots[WeaponSlot.Wp1] : null,
+            weaponSlots.ContainsKey(WeaponSlot.Wp2) ? weaponSlots[WeaponSlot.Wp2] : null,
+            weaponSlots.ContainsKey(WeaponSlot.Wp3) ? weaponSlots[WeaponSlot.Wp3] : null
+        };
+        int activeIndex = (int)CurrentSlot;
+        OnWPStateChanged?.Invoke(activeIndex, instances);
     }
 
     public bool TryUseSkill(SkillData skill)
@@ -133,29 +132,11 @@ public class WeaponManager : MonoBehaviour
         WeaponInstance active = ActiveWeapon;
         if (active == null || skill == null) return false;
 
-        // スキル側に設定されているコスト（例: skill.wpCost など）を取得して判定
-        float cost = skill.wpCost; // SkillDataにwpCostプロパティがある想定
-
-        if (active.ConsumeWP(cost))
+        if (active.ConsumeWP(skill.wpCost))
         {
-            // 消費成功した場合にスキル実行を許可
-            if (active.WPGauge != null)
-            {
-                NotifyWPChanged(active.WPGauge.CurrentValue, active.WPGauge.MaxStat.Value);
-            }
+            NotifyStateChanged();
             return true;
         }
-
-        return false; // WP不足で発動失敗
-    }
-
-    private void CheckAndInvokeWPChange()
-    {
-        WeaponInstance active = ActiveWeapon;
-        if (active != null && active.WPGauge != null)
-        {
-            // ResourceGauge の仕様に合わせて現在値と最大値をイベントで通知
-            OnActiveWeaponWPChanged?.Invoke(active.WPGauge.CurrentValue, active.WPGauge.MaxStat.Value);
-        }
+        return false;
     }
 }
