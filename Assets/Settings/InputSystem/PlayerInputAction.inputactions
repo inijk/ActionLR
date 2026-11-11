@@ -95,6 +95,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "PauseMenu",
+                    "type": "Button",
+                    "id": "8282ebb2-c377-4128-8506-f9eef2331114",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -370,6 +379,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "Pause&Book",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5b5873b8-a373-4450-ad61-5c68b04efb6a",
+                    "path": "<Gamepad>/start",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "PauseMenu",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "79f149d2-70b2-4e08-9071-679a127e6054",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "PauseMenu",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
