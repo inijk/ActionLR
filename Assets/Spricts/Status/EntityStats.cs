@@ -16,6 +16,7 @@ public class EntityStats : MonoBehaviour
 
     [Header("― 基本ステータスレベル (0 ~ 9) ―")]
     [SerializeField] private BaseStatLevels baseLevels;
+    public BaseStatLevels BaseLevels => baseLevels;
 
     // 戦闘計算用ステータス (Stat.cs を再利用)
     public Stat Attack { get; private set; }
