@@ -45,27 +45,23 @@ public class EntityStats : MonoBehaviour
 
     public void InitializeStats()
     {
-        // 1. 内部スケーリング計算 (例: VIT * 20 + 基本値50 = MaxHP)
         float calculatedMaxHP = 50f + (baseLevels.VIT * 20f);
         float calculatedMaxST = 30f + (baseLevels.DEX * 10f);
         float calculatedSTRec = 5f + (baseLevels.DEX * 1.5f);
-        float calculatedMaxWP = 100f; // ← WPの基本値（必要に応じてDEXやINT等で変動させてもOKです）
-        // 2. Statインスタンスの生成
+        float calculatedMaxWP = 100f;
+
         MaxHP = new Stat(calculatedMaxHP);
         MaxST = new Stat(calculatedMaxST);
         STRecoveryRate = new Stat(calculatedSTRec);
-        maxWp = new Stat(calculatedMaxWP); // ★ ここで maxWp のインスタンスを生成する！
+        maxWp = new Stat(calculatedMaxWP);
 
         Attack = new Stat(baseLevels.ATK * 10f);
         Intelligence = new Stat(baseLevels.INT * 10f);
         Defense = new Stat(baseLevels.DEF * 5f);
         Mind = new Stat(baseLevels.MND * 5f);
 
-        // 3. Dynamic Resourcesの初期化
         HP = new ResourceGauge(MaxHP);
         ST = new ResourceGauge(MaxST);
-        
-        // FP(疲労度)は固定上限100とする例
         FP = new ResourceGauge(new Stat(100f));
 
         HP.Initialize();
@@ -75,7 +71,6 @@ public class EntityStats : MonoBehaviour
 
     private void Update()
     {
-        // スタミナ自動回復（敵味方共通処理）
         if (ST.CurrentValue < MaxST.Value)
         {
             ST.Recover(STRecoveryRate.Value * Time.deltaTime);
@@ -83,18 +78,14 @@ public class EntityStats : MonoBehaviour
         CheckDeath();
     }
 
-    /// <summary>
-    /// HPが0以下になったかを検証し、死亡イベントを発火する
-    /// </summary>
     public void CheckDeath()
     {
         if (isDead) return;
 
-        // ResourceGaugeのCurrentValueを利用している想定[cite: 1, 2]
         if (HP != null && HP.CurrentValue <= 0f)
         {
             isDead = true;
-            OnDeath?.Invoke(); // 登録されている死亡時処理を実行
+            OnDeath?.Invoke();
         }
     }
 }
