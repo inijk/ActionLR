@@ -64,6 +64,13 @@ public class ProjectileBullet : MonoBehaviour
             targetStats.HP.Consume(finalDamage);
             Debug.Log($"[弾ヒット] {other.name} に {finalDamage:F1} ダメージ！");
 
+            // ★ 追記：ダメージとブレイク倍率のポップアップ表示
+            if (DamagePopupManager.Instance != null)
+            {
+                bool isPlayer = other.CompareTag("Player") || other.GetComponent<PlayerMovement>() != null;
+                DamagePopupManager.Instance.ShowDamage(finalDamage, other.transform.position, breakDamageMult, isPlayer);
+            }
+            
             // ブレイク値の蓄積
             if (breakController != null && breakValue > 0f)
             {
