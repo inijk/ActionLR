@@ -47,6 +47,13 @@ public class MeleeHitbox : MonoBehaviour
             targetStats.HP.Consume(finalDamage);
             Debug.Log($"{other.name} に {finalDamage:F1} ダメージを与えた！");
 
+            // ★ 追記：ダメージとブレイク倍率のポップアップ表示
+            if (DamagePopupManager.Instance != null)
+            {
+                bool isPlayer = other.CompareTag("Player") || other.GetComponent<PlayerMovement>() != null;
+                DamagePopupManager.Instance.ShowDamage(finalDamage, other.transform.position, breakDamageMult, isPlayer);
+            }
+
             // ブレイク値の蓄積
             if (breakController != null && breakValue > 0f)
             {
