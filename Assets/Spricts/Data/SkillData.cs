@@ -8,6 +8,10 @@ public abstract class SkillData : ScriptableObject
     public Sprite icon;
     public float wpCost = 3f;
 
+    [Header("― 戦闘・ブレイクパラメータ ―")]
+    public float damageMultiplier = 1.0f; // 威力倍率（ステータスATKに対する乗数）
+    public float breakValue = 10f;        // 敵に与える基本ブレイク蓄積値
+
     private void OnValidate()
     {
         if (!string.IsNullOrEmpty(name))

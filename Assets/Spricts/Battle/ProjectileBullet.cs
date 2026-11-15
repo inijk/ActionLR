@@ -9,6 +9,7 @@ public class ProjectileBullet : MonoBehaviour
 
     private EntityStats attackerStats;
     private float damageMultiplier = 1.0f;
+    private float breakValue = 0f; // 与えるブレイク値
 
     private bool isPierce = false;
     private int remainingPierceCount = 0;
@@ -16,12 +17,14 @@ public class ProjectileBullet : MonoBehaviour
     // 同一敵への重複ヒット防止用
     private HashSet<Collider2D> hitTargets = new HashSet<Collider2D>();
 
-    public void Setup(EntityStats stats, float multiplier, float lifetime, bool pierce, int maxPierce)
+    // ★ 引数に breakVal（与えるブレイク値）を追加
+    public void Setup(EntityStats stats, float multiplier, float lifetime, bool pierce, int maxPierce, float breakVal = 0f)
     {
         attackerStats = stats;
         damageMultiplier = multiplier;
         isPierce = pierce;
         remainingPierceCount = maxPierce;
+        breakValue = breakVal;
 
         Destroy(gameObject, lifetime);
     }
@@ -32,10 +35,8 @@ public class ProjectileBullet : MonoBehaviour
         if (hitTargets.Contains(other)) return;
 
         // 1. 地形・壁判定（LayerMask または Tag でチェック）
-        // 接触相手のレイヤーが obstacleLayer に含まれるかチェック
         if (((1 << other.gameObject.layer) & obstacleLayer) != 0 || other.CompareTag("Wall"))
         {
-            // 地形に当たった場合は貫通数に関わらず即削除
             Destroy(gameObject);
             return;
         }
@@ -45,14 +46,29 @@ public class ProjectileBullet : MonoBehaviour
         {
             hitTargets.Add(other);
 
-            // ダメージ処理
+            // 基礎ダメージ計算
             float attackerAtk = attackerStats != null ? attackerStats.Attack.Value : 10f;
             float totalAtk = attackerAtk * damageMultiplier;
             float targetDef = targetStats.Defense.Value;
-            float finalDamage = Mathf.Max(1f, totalAtk - targetDef);
+            float baseDamage = Mathf.Max(1f, totalAtk - targetDef);
 
+            // ブレイク倍率の取得
+            float breakDamageMult = 1.0f;
+            if (other.TryGetComponent<BreakController>(out var breakController))
+            {
+                breakDamageMult = breakController.GetDamageMultiplier();
+            }
+
+            // 最終ダメージ（基礎ダメージ × 現在のブレイク％）
+            float finalDamage = baseDamage * breakDamageMult;
             targetStats.HP.Consume(finalDamage);
-            Debug.Log($"[弾ヒット] {other.name} に {finalDamage} ダメージ！");
+            Debug.Log($"[弾ヒット] {other.name} に {finalDamage:F1} ダメージ！");
+
+            // ブレイク値の蓄積
+            if (breakController != null && breakValue > 0f)
+            {
+                breakController.AddBreakValue(breakValue);
+            }
 
             // 敵に対する貫通処理
             if (isPierce)

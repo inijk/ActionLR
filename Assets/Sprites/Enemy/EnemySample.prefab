@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4591496554568702166}
   - component: {fileID: 55437721838978616}
+  - component: {fileID: 1865991306137606272}
   - component: {fileID: 2823648793653992012}
   - component: {fileID: -8784113160028638497}
   - component: {fileID: -234315977440664802}
@@ -51,7 +52,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EntityStats
   baseLevels:
-    ATK: 1
+    ATK: 2
     INT: 1
     DEF: 0
     MND: 0
@@ -59,6 +60,22 @@ MonoBehaviour:
     DEX: 0
   maxWp:
     baseValue: 0
+--- !u!114 &1865991306137606272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 950554824660912988}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20301ffb82c53714b81fdd562c48f020, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BreakController
+  baseBreakLimit: 150
+  baseBreakResistance: 25
+  baseBreakDecayRate: 5
+  breakResistancePenalty: 50
 --- !u!212 &2823648793653992012
 SpriteRenderer:
   serializedVersion: 2
@@ -159,8 +176,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
   movementPattern: {fileID: 11400000, guid: 36e707beb625abd41b7ed8c6003d6870, type: 2}
   enemyData: {fileID: 11400000, guid: 3153f9af1ac50f24294c5c5efd251d44, type: 2}
-  changeInterval: 2
-  moveSpeed: 3
 --- !u!61 &7615314241240486971
 BoxCollider2D:
   m_ObjectHideFlags: 0
