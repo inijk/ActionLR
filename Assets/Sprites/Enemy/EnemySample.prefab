@@ -73,9 +73,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BreakController
   baseBreakLimit: 150
-  baseBreakResistance: 25
+  baseBreakResistance: 1
   baseBreakDecayRate: 5
-  breakResistancePenalty: 50
+  baseBreakDuration: 8
+  maxBreakPercent: 999
+  breakBonusPercent: 100
+  breakStateResistanceBonus: 0.5
 --- !u!212 &2823648793653992012
 SpriteRenderer:
   serializedVersion: 2

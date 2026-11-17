@@ -21,6 +21,12 @@ public class LockOnController : MonoBehaviour
     public Transform HoveredTarget => hoveredTarget;
     public bool IsLockedOn => lockedTarget != null;
 
+    private BreakController lockedTargetBreak;
+    public BreakController LockedTargetBreak => lockedTargetBreak;
+
+    // UI連携用イベント（ロックオン対象が変更・解除された瞬間に通知）
+    public event System.Action<Transform, EntityStats, BreakController> OnLockOnTargetChanged;
+
     private void Awake()
     {
         aimController = GetComponent<PlayerAimController>();
@@ -147,27 +153,33 @@ public class LockOnController : MonoBehaviour
     {
         lockedTarget = target;
         lockedTargetStats = target.GetComponent<EntityStats>();
+        lockedTargetBreak = target.GetComponent<BreakController>();
 
         if (lockedTargetStats != null)
         {
             float currentHp = lockedTargetStats.HP.CurrentValue;
             float maxHp = lockedTargetStats.MaxHP.Value;
-            Debug.Log($"[LockOn] ロックオン: {lockedTarget.name} | HP: {currentHp:F0} / {maxHp:F0}");
+            //Debug.Log($"[LockOn] ロックオン: {lockedTarget.name} | HP: {currentHp:F0} / {maxHp:F0}");
         }
         else
         {
-            Debug.Log($"[LockOn] ロックオン: {lockedTarget.name}");
+            //Debug.Log($"[LockOn] ロックオン: {lockedTarget.name}");
         }
+
+        OnLockOnTargetChanged?.Invoke(lockedTarget, lockedTargetStats, lockedTargetBreak);
     }
 
     public void ClearLockOnTarget()
     {
         if (lockedTarget != null)
         {
-            Debug.Log($"[LockOn] 解除: {lockedTarget.name}");
+            //Debug.Log($"[LockOn] 解除: {lockedTarget.name}");
         }
         lockedTarget = null;
         lockedTargetStats = null;
+        lockedTargetBreak = null;
+
+        OnLockOnTargetChanged?.Invoke(null, null, null);
     }
 
     private void ValidateLockedTarget()

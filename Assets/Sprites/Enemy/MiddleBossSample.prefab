@@ -18,7 +18,7 @@ GameObject:
   - component: {fileID: -2855034522128354234}
   - component: {fileID: 277700287130735996}
   m_Layer: 7
-  m_Name: EnemySample 1
+  m_Name: MiddleBossSample
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -56,7 +56,7 @@ MonoBehaviour:
     INT: 1
     DEF: 0
     MND: 0
-    VIT: 6
+    VIT: 8
     DEX: 0
   maxWp:
     baseValue: 0
@@ -73,9 +73,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BreakController
   baseBreakLimit: 200
-  baseBreakResistance: 50
+  baseBreakResistance: 0.75
   baseBreakDecayRate: 5
-  breakResistancePenalty: 50
+  baseBreakDuration: 8
+  maxBreakPercent: 999
+  breakBonusPercent: 100
+  breakStateResistanceBonus: 0.5
 --- !u!212 &2823648793653992012
 SpriteRenderer:
   serializedVersion: 2

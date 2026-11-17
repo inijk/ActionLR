@@ -41,7 +41,7 @@ public class DamagePopup : MonoBehaviour
 
         // 小数点第1位まで倍率を表示（例: 121(x1.2)）
         int roundedDamage = Mathf.RoundToInt(damage);
-        textMesh.text = $"{roundedDamage}<size=8>(x{breakMultiplier:F1}</size>)";
+        textMesh.text = $"{roundedDamage}";
 
         currentColor = color;
         textMesh.color = currentColor;
