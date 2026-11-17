@@ -8,12 +8,23 @@ public class LockOnController : MonoBehaviour
     [SerializeField] private LayerMask enemyLayer;              // 敵のレイヤー
     [SerializeField] private float maxLockOnDistance = 15f;     // レイの最大飛距離
 
+    [Header("視覚フィードバック参照")]
+    [SerializeField] private LockOnIndicatorUI lockOnIndicator; // マーカー追尾UI（またはスプライト）
+
+    private PlayerAimController aimController;
     private Transform lockedTarget;
     private EntityStats lockedTargetStats;
+    private Transform hoveredTarget; // ロックオン前にレイが触れている対象
 
     public Transform LockedTarget => lockedTarget;
     public EntityStats LockedTargetStats => lockedTargetStats;
+    public Transform HoveredTarget => hoveredTarget;
     public bool IsLockedOn => lockedTarget != null;
+
+    private void Awake()
+    {
+        aimController = GetComponent<PlayerAimController>();
+    }
 
     private void OnEnable()
     {
@@ -36,6 +47,53 @@ public class LockOnController : MonoBehaviour
     private void Update()
     {
         ValidateLockedTarget();
+        UpdateHoveredTarget();
+        UpdateIndicatorVisuals();
+    }
+
+    /// <summary>
+    /// ロックオンしていない間、常にレイを飛ばして触れている対象（候補）を更新
+    /// </summary>
+    private void UpdateHoveredTarget()
+    {
+        if (IsLockedOn)
+        {
+            hoveredTarget = null;
+            return;
+        }
+
+        if (aimController != null && aimController.AimCursorTransform != null)
+        {
+            hoveredTarget = DetectEnemyAlongRay(aimController.AimCursorTransform.position);
+        }
+        else
+        {
+            hoveredTarget = null;
+        }
+    }
+
+    /// <summary>
+    /// マーカーUIへ「追尾対象」と「ロックオン確定状態か」を伝える
+    /// </summary>
+    private void UpdateIndicatorVisuals()
+    {
+        if (lockOnIndicator == null) return;
+
+        if (IsLockedOn)
+        {
+            // ロックオン確定対象を追尾（強調表示）
+            lockOnIndicator.SetTarget(lockedTarget, isLocked: true);
+        }
+        else if (hoveredTarget != null)
+        {
+            // ロックオン前だがレイが当たっている対象を追尾（候補表示）
+            lockOnIndicator.SetTarget(hoveredTarget, isLocked: false);
+        }
+        else
+        {
+            // どちらもない場合は非表示
+            lockOnIndicator.Hide();
+        }
     }
 
     /// <summary>
@@ -43,28 +101,21 @@ public class LockOnController : MonoBehaviour
     /// </summary>
     private void OnLockOnPerformed(InputAction.CallbackContext context)
     {
-        // PlayerAimController から現在のカーソル位置を取得してレイ判定を行う
-        if (!TryGetComponent<PlayerAimController>(out var aimController) || aimController.AimCursorTransform == null)
+        if (aimController == null || aimController.AimCursorTransform == null) return;
+
+        // すでにロックオン中の場合：キーを押したら解除
+        if (IsLockedOn)
         {
+            ClearLockOnTarget();
             return;
         }
 
+        // 未ロックオン時：レイが触れている対象がいればロックオン登録
         Transform detectedEnemy = DetectEnemyAlongRay(aimController.AimCursorTransform.position);
-
-        // 狙ったところに敵がいる場合はその敵をロックオン（別ターゲットへの切り替えも対応）
         if (detectedEnemy != null)
         {
-            // すでに同じ敵をロックオン中の場合は解除、別の敵なら切り替え
-            if (lockedTarget == detectedEnemy)
-            {
-                ClearLockOnTarget();
-            }
-            else
-            {
-                SetLockOnTarget(detectedEnemy);
-            }
+            SetLockOnTarget(detectedEnemy);
         }
-        // 狙ったところに敵がいない場合はロックオンオブジェクトを空（解除）にする
         else
         {
             ClearLockOnTarget();
@@ -72,29 +123,26 @@ public class LockOnController : MonoBehaviour
     }
 
     /// <summary>
-    /// プレイヤー座標から指定位置（カーソル）へレイを飛ばし、触れた敵を返す
+    /// プレイヤー座標からカーソル方向へ最大距離（maxLockOnDistance）までレイを伸ばし、触れた敵を返す
     /// </summary>
     private Transform DetectEnemyAlongRay(Vector3 cursorWorldPos)
     {
         Vector2 origin = transform.position;
-        Vector2 targetPos = cursorWorldPos;
-        Vector2 toCursor = targetPos - origin;
+        Vector2 toCursor = (Vector2)cursorWorldPos - origin;
 
-        float distanceToCursor = toCursor.magnitude;
-        if (distanceToCursor < 0.01f) return null;
+        // カーソルが自機と完全に重なっている（方向が出せない）場合は判定しない
+        if (toCursor.sqrMagnitude < 0.001f) return null;
 
-        float rayDistance = Mathf.Min(distanceToCursor, maxLockOnDistance);
+        // カーソルまでの距離で止めず、その方向へ常に maxLockOnDistance まで伸ばす
         Vector2 direction = toCursor.normalized;
 
-        Debug.DrawRay(origin, direction * rayDistance, Color.red, 1.0f);
+        // デバッグ確認用（Sceneビューに赤い線で射程を表示）
+        Debug.DrawRay(origin, direction * maxLockOnDistance, Color.red);
 
-        RaycastHit2D hit = Physics2D.Raycast(origin, direction, rayDistance, enemyLayer);
+        RaycastHit2D hit = Physics2D.Raycast(origin, direction, maxLockOnDistance, enemyLayer);
         return hit.collider != null ? hit.collider.transform : null;
     }
 
-    /// <summary>
-    /// ロックオン対象の登録と名前・HPの出力
-    /// </summary>
     public void SetLockOnTarget(Transform target)
     {
         lockedTarget = target;
@@ -108,13 +156,10 @@ public class LockOnController : MonoBehaviour
         }
         else
         {
-            Debug.Log($"[LockOn] ロックオン: {lockedTarget.name} (EntityStatsなし)");
+            Debug.Log($"[LockOn] ロックオン: {lockedTarget.name}");
         }
     }
 
-    /// <summary>
-    /// ロックオン対象を空にする
-    /// </summary>
     public void ClearLockOnTarget()
     {
         if (lockedTarget != null)
@@ -125,9 +170,6 @@ public class LockOnController : MonoBehaviour
         lockedTargetStats = null;
     }
 
-    /// <summary>
-    /// ロックオン中の敵が倒された・消滅した場合の自動クリア
-    /// </summary>
     private void ValidateLockedTarget()
     {
         if (lockedTarget == null) return;
