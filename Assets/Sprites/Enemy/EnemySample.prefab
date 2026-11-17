@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 7615314241240486971}
   - component: {fileID: -2855034522128354234}
   - component: {fileID: 277700287130735996}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: EnemySample
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -73,9 +73,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BreakController
   baseBreakLimit: 150
-  baseBreakResistance: 25
+  baseBreakResistance: 1
   baseBreakDecayRate: 5
-  breakResistancePenalty: 50
+  baseBreakDuration: 8
+  maxBreakPercent: 999
+  breakBonusPercent: 100
+  breakStateResistanceBonus: 0.5
 --- !u!212 &2823648793653992012
 SpriteRenderer:
   serializedVersion: 2
