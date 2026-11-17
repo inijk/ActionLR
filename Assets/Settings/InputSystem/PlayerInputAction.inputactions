@@ -88,18 +88,18 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Pause&Book",
+                    "name": "PauseMenu",
                     "type": "Button",
-                    "id": "3c90f501-c26f-4dcc-9f1f-ffa13397782c",
+                    "id": "8282ebb2-c377-4128-8506-f9eef2331114",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
                 },
                 {
-                    "name": "PauseMenu",
+                    "name": "LockOn",
                     "type": "Button",
-                    "id": "8282ebb2-c377-4128-8506-f9eef2331114",
+                    "id": "dcf1c8e4-65c6-4714-83b7-a533405f2fb9",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -352,33 +352,11 @@
                 {
                     "name": "",
                     "id": "a0cca814-9789-43f8-a7fe-ced9ad2ff0bb",
-                    "path": "<Gamepad>/rightStickPress",
+                    "path": "<Gamepad>/leftStickPress",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
                     "action": "CommandWindow",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "205252b2-b968-4568-a2d0-2c3bd79486ff",
-                    "path": "<Keyboard>/tab",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Pause&Book",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "73c9616d-5cf1-44b6-ab71-647c1be64c03",
-                    "path": "<Gamepad>/rightStickPress",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Pause&Book",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -401,6 +379,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "PauseMenu",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7de0d424-b2d1-44eb-bc60-ed791d222f2b",
+                    "path": "<Gamepad>/rightStickPress",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LockOn",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7bc540b7-40c8-428b-aa3d-4205494b2b55",
+                    "path": "<Mouse>/middleButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LockOn",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

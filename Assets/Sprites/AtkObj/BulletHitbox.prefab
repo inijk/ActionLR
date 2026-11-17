@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6135678928194935542}
   - component: {fileID: 7313004483352580399}
   - component: {fileID: 6367765297964507094}
-  - component: {fileID: 2597948812336749376}
+  - component: {fileID: 8365612216842100757}
   m_Layer: 0
   m_Name: BulletHitbox
   m_TagString: Untagged
@@ -167,7 +167,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &2597948812336749376
+--- !u!114 &8365612216842100757
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -176,7 +176,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 7685040735048101494}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b2dc682cc9bc2842be1680fbb5bf58d, type: 3}
+  m_Script: {fileID: 11500000, guid: ee72e6223e4d3d04694c234f20c52a58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileBullet
   obstacleLayer:

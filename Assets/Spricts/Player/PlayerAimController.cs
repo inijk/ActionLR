@@ -3,7 +3,6 @@ using UnityEngine.InputSystem;
 
 public class PlayerAimController : MonoBehaviour
 {
-    // 操作モードの定義
     public enum AimControlMode
     {
         Gamepad,
@@ -14,133 +13,152 @@ public class PlayerAimController : MonoBehaviour
     [SerializeField] private AimControlMode currentControlMode = AimControlMode.Mouse;
 
     [Header("コンポーネント参照")]
-    [SerializeField] private Transform cameraTarget;      // Cinemachineが追従する空のTarget
-    [SerializeField] private Transform aimPointer;       // プレイヤーの周りを回る指示スプライト
+    [SerializeField] private LockOnController lockOnController; // ロックオン管理の参照
+    [SerializeField] private Transform aimCursorTransform;        // 照準用空オブジェクト
+    [SerializeField] private Transform cameraTarget;              // Cinemachineが追従する空のTarget
+    [SerializeField] private Transform aimPointer;                // プレイヤーの周りを回る指示スプライト
 
     [Header("エイム＆カメラ設定")]
-    [SerializeField] private float orbitRadius = 1.5f;            // 三角形の周回半径
-    [SerializeField] private float cameraOffsetDistance = 3.0f;        // カメラをずらす距離
-    [SerializeField] private float cameraLerpSpeed = 8.0f;        // カメラターゲットの移動補正速度
-    [SerializeField] private float mouseDeadzoneRatio = 0.15f;       // マウス用: 画面中央からの不感帯領域（0.0〜0.5）
-    [SerializeField] private float mouseMaxRangeRatio = 0.40f;       // マウス用: 最大カメラ移動に達する領域（0.0〜0.5）
+    [SerializeField] private float orbitRadius = 1.5f;             // 指示スプライトの周回半径
+    [SerializeField] private float cameraOffsetDistance = 3.0f;    // カメラをずらす最大距離
+    [SerializeField] private float cameraLerpSpeed = 8.0f;         // カメラターゲットの移動補正速度
+    [SerializeField] private float cursorDeadzoneDistance = 1.5f;  // カメラが動き始める不感帯距離
+    [SerializeField] private float cursorMaxFocusDistance = 6.0f;  // カメラシフトが最大に達する距離
 
-    private PlayerInput playerInput;
+    [Header("ゲームパッド用カーソル設定")]
+    [SerializeField] private float gamepadCursorRadius = 5.0f;     // スティック最大倒し時のカーソル移動半径 r
+    [SerializeField] private float gamepadStickDeadzone = 0.1f;    // スティックの遊び（不感帯）
+    [SerializeField] private float gamepadCursorLerpSpeed = 20f;   // カーソルが戻る・動く滑らかさ
+
     private Camera mainCamera;
-    
-    private Vector2 rawAimInput;                       // スティック入力値
-    private Vector2 currentAimDirection = Vector2.up; // 現在の狙い方向
-    private float currentCameraOffsetFactor = 0f;     // カメラ移動の適用割合 (0.0 ～ 1.0)
+    private Vector2 rawStickInput;
+    private Vector2 currentAimDirection = Vector2.up;
+    private float currentCameraOffsetFactor = 0f;
 
     public AimControlMode CurrentControlMode => currentControlMode;
+    public Vector2 CurrentAimDirection => currentAimDirection;
+    public Transform AimCursorTransform => aimCursorTransform;
 
     private void Awake()
     {
-        playerInput = GetComponent<PlayerInput>();
         mainCamera = Camera.main;
+        if (lockOnController == null)
+        {
+            lockOnController = GetComponent<LockOnController>();
+        }
     }
 
     private void Update()
     {
+        UpdateCursorPosition();
         UpdateAimDirectionAndCameraFactor();
         UpdatePointerTransform();
         UpdateCameraTargetPosition();
     }
 
-    /// <summary>
-    /// Input System: Look アクションの入力受取
-    /// </summary>
     public void OnLook(InputValue value)
     {
-        rawAimInput = value.Get<Vector2>();
-    }
-
-    /// <summary>
-    /// UIボタン等から操作モードを変更するための公開メソッド
-    /// </summary>
-    public void SetControlMode(int modeIndex)
-    {
-        // 0: Gamepad, 1: Mouse (DropdownやButtonのOnClickから指定可能)
-        currentControlMode = (AimControlMode)modeIndex;
+        rawStickInput = value.Get<Vector2>();
     }
 
     public void SwitchToGamepadMode() => currentControlMode = AimControlMode.Gamepad;
     public void SwitchToMouseMode() => currentControlMode = AimControlMode.Mouse;
 
     /// <summary>
-    /// 選択された操作モードに基づいてエイム＆カメラを計算
+    /// 1. 照準用空オブジェクトの位置を更新（ロックオン有無で挙動を切り替え）
+    /// </summary>
+    private void UpdateCursorPosition()
+    {
+        if (aimCursorTransform == null) return;
+
+        // 【状態A：ロックオン中】ロックオンした敵の座標を常に追いかける
+        if (lockOnController != null && lockOnController.IsLockedOn)
+        {
+            Vector3 targetPos = lockOnController.LockedTarget.position;
+            targetPos.z = transform.position.z;
+            aimCursorTransform.position = targetPos;
+            return;
+        }
+
+        // 【状態B：非ロックオン中（ゲームパッド）】プレイヤー中心から半径 r 内で移動
+        if (currentControlMode == AimControlMode.Gamepad)
+        {
+            Vector2 stickOffset = Vector2.zero;
+
+            if (rawStickInput.magnitude > gamepadStickDeadzone)
+            {
+                Vector2 clampedStick = Vector2.ClampMagnitude(rawStickInput, 1.0f);
+                stickOffset = clampedStick * gamepadCursorRadius;
+            }
+
+            Vector3 targetWorldPos = transform.position + (Vector3)stickOffset;
+            targetWorldPos.z = transform.position.z;
+
+            aimCursorTransform.position = Vector3.Lerp(
+                aimCursorTransform.position,
+                targetWorldPos,
+                Time.deltaTime * gamepadCursorLerpSpeed
+            );
+            return;
+        }
+
+        // 【状態C：非ロックオン中（マウス）】マウスポインタにピッタリ追従
+        if (currentControlMode == AimControlMode.Mouse && Mouse.current != null && mainCamera != null)
+        {
+            Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
+            float zDepth = Mathf.Abs(mainCamera.transform.position.z - transform.position.z);
+            Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(mouseScreenPos.x, mouseScreenPos.y, zDepth));
+            worldPos.z = transform.position.z;
+
+            aimCursorTransform.position = worldPos;
+        }
+    }
+
+    /// <summary>
+    /// 2. プレイヤーから「照準用空オブジェクト」への方向とカメラシフト割合を計算
     /// </summary>
     private void UpdateAimDirectionAndCameraFactor()
     {
-        if (mainCamera == null) return;
+        if (aimCursorTransform == null) return;
 
-        // =================================================================
-        // A. 【ゲームパッドモード】
-        // =================================================================
-        if (currentControlMode == AimControlMode.Gamepad)
+        Vector2 toCursor = (Vector2)(aimCursorTransform.position - transform.position);
+        float distance = toCursor.magnitude;
+
+        if (distance > 0.05f)
         {
-            if (rawAimInput.sqrMagnitude > 0.05f)
-            {
-                // スティックを倒している間：向きを更新し、傾きに応じてカメラをオフセット
-                currentAimDirection = rawAimInput.normalized;
-                currentCameraOffsetFactor = Mathf.Clamp01(rawAimInput.magnitude);
-            }
-            else
-            {
-                // スティックを離した時：向き(currentAimDirection)は維持し、カメラのみ中心に戻す
-                currentCameraOffsetFactor = 0f;
-            }
-            return; // マウス処理へ落とさず確実に終了
+            currentAimDirection = toCursor.normalized;
         }
 
-        // =================================================================
-        // B. 【マウスモード】
-        // =================================================================
-        if (currentControlMode == AimControlMode.Mouse && Mouse.current != null)
+        if (distance <= cursorDeadzoneDistance)
         {
-            // 1. マウス位置をビューポート座標（0.0 ~ 1.0）へ変換
-            Vector3 mouseScreenPos = Mouse.current.position.ReadValue();
-            Vector3 mouseViewportPos = mainCamera.ScreenToViewportPoint(mouseScreenPos);
-
-            // 2. プレイヤー（画面中心）のビューポート座標を (0.5, 0.5) に固定
-            Vector2 centerViewportPos = new Vector2(0.5f, 0.5f);
-
-            // 3. 画面中心からの差分と距離（distance）を計算
-            Vector2 diff = (Vector2)mouseViewportPos - centerViewportPos;
-            float distance = diff.magnitude; // 画面中央からの距離（画面端で約0.5）
-
-            // マウスの向き計算
-            if (distance > 0.001f)
+            currentCameraOffsetFactor = 0f;
+        }
+        else
+        {
+            float range = cursorMaxFocusDistance - cursorDeadzoneDistance;
+            if (range > 0.0001f)
             {
-                currentAimDirection = diff.normalized;
+                currentCameraOffsetFactor = Mathf.Clamp01((distance - cursorDeadzoneDistance) / range);
             }
-
-            // 画面中央からの距離（しきい値）に応じたカメラオフセット計算
-            if (distance <= mouseDeadzoneRatio)
-            {
-                currentCameraOffsetFactor = 0f;
-            }
-            else
-            {
-                float range = mouseMaxRangeRatio - mouseDeadzoneRatio;
-                if (range > 0.0001f)
-                {
-                    currentCameraOffsetFactor = Mathf.Clamp01((distance - mouseDeadzoneRatio) / range);
-                }
-            }
-}
+        }
     }
 
+    /// <summary>
+    /// 3. 衛星インジケーターの位置と向きを更新
+    /// </summary>
     private void UpdatePointerTransform()
     {
         if (aimPointer == null) return;
 
-        Vector3 targetPosition = transform.position + (Vector3)(currentAimDirection * orbitRadius);
-        aimPointer.position = targetPosition;
+        aimPointer.position = transform.position + (Vector3)(currentAimDirection * orbitRadius);
 
         float angle = Mathf.Atan2(currentAimDirection.y, currentAimDirection.x) * Mathf.Rad2Deg - 90f;
         aimPointer.rotation = Quaternion.Euler(0, 0, angle);
     }
 
+    /// <summary>
+    /// 4. Cinemachine追従用の CameraTarget を空オブジェクト方向へずらす
+    /// </summary>
     private void UpdateCameraTargetPosition()
     {
         if (cameraTarget == null) return;
@@ -148,8 +166,8 @@ public class PlayerAimController : MonoBehaviour
         Vector3 targetLocalPos = (Vector3)(currentAimDirection * (cameraOffsetDistance * currentCameraOffsetFactor));
 
         cameraTarget.localPosition = Vector3.Lerp(
-            cameraTarget.localPosition, 
-            targetLocalPos, 
+            cameraTarget.localPosition,
+            targetLocalPos,
             Time.deltaTime * cameraLerpSpeed
         );
     }

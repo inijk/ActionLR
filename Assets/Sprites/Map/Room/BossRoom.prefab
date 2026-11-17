@@ -2045,7 +2045,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Room
   enemyPrefabs:
-  - {fileID: 950554824660912988, guid: 25c6db1067326684cbb71661f1417fd4, type: 3}
+  - {fileID: 950554824660912988, guid: b3c0da6993c3fb54f9a841dedf9ad2ed, type: 3}
 --- !u!1 &5383218212238193438
 GameObject:
   m_ObjectHideFlags: 0
